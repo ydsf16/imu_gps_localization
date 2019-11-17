@@ -1,7 +1,7 @@
 #include "localization_wrapper.h"
 
-#include <list>
-#include <vector>
+#include <iomanip>
+
 #include <glog/logging.h>
 
 #include "imu_gps_localizer/base_type.h"
@@ -20,6 +20,13 @@ LocalizationWrapper::LocalizationWrapper(ros::NodeHandle& nh) {
     nh.param("I_p_Gps_z", z, 0.);
     const Eigen::Vector3d I_p_Gps(x, y, z);
 
+    std::string log_folder = "/home";
+    ros::param::get("log_folder", log_folder);
+
+    // Log.
+    file_state_.open(log_folder + "/state.csv");
+    file_gps_.open(log_folder +"/gps.csv");
+
     // Initialization imu gps localizer.
     imu_gps_localizer_ptr_ = 
         std::make_unique<ImuGpsLocalization::ImuGpsLocalizer>(acc_noise, gyro_noise,
@@ -29,6 +36,13 @@ LocalizationWrapper::LocalizationWrapper(ros::NodeHandle& nh) {
     // Subscribe topics.
     imu_sub_ = nh.subscribe("/imu/data", 10,  &LocalizationWrapper::ImuCallback, this);
     gps_sub_ = nh.subscribe("/fix", 10,  &LocalizationWrapper::GpsCallBack, this);
+
+    state_pub_ = nh.advertise<nav_msgs::Path>("fused_path", 10);
+}
+
+LocalizationWrapper::~LocalizationWrapper() {
+    file_state_.close();
+    file_gps_.close();
 }
 
 void LocalizationWrapper::ImuCallback(const sensor_msgs::ImuConstPtr& imu_msg_ptr) {
@@ -42,11 +56,17 @@ void LocalizationWrapper::ImuCallback(const sensor_msgs::ImuConstPtr& imu_msg_pt
                           imu_msg_ptr->angular_velocity.z;
     
     ImuGpsLocalization::State fused_state;
-    imu_gps_localizer_ptr_->ProcessImuData(imu_data_ptr, &fused_state);
+    const bool ok = imu_gps_localizer_ptr_->ProcessImuData(imu_data_ptr, &fused_state);
+    if (!ok) {
+        return;
+    }
 
     // Publish fused state.
+    ConvertStateToRosTopic(fused_state);
+    state_pub_.publish(ros_path_);
 
     // Log fused state.
+    LogState(fused_state);
 }
 
 void LocalizationWrapper::GpsCallBack(const sensor_msgs::NavSatFixConstPtr& gps_msg_ptr) {
@@ -64,4 +84,47 @@ void LocalizationWrapper::GpsCallBack(const sensor_msgs::NavSatFixConstPtr& gps_
     gps_data_ptr->cov = Eigen::Map<const Eigen::Matrix3d>(gps_msg_ptr->position_covariance.data());
 
     imu_gps_localizer_ptr_->ProcessGpsData(gps_data_ptr);
+    
+    LogGps(gps_data_ptr);
+}
+
+void LocalizationWrapper::LogState(const ImuGpsLocalization::State& state) {
+    const Eigen::Quaterniond G_q_I(state.G_R_I);
+    file_state_ << std::fixed << std::setprecision(15)
+                << state.timestamp << ","
+                << state.lla[0] << "," << state.lla[1] << "," << state.lla[2] << ","
+                << state.G_p_I[0] << "," << state.G_p_I[1] << "," << state.G_p_I[2] << ","
+                << state.G_v_I[0] << "," << state.G_v_I[1] << "," << state.G_v_I[2] << ","
+                << G_q_I.x() << "," << G_q_I.y() << "," << G_q_I.z() << "," << G_q_I.w() << ","
+                << state.acc_bias[0] << "," << state.acc_bias[1] << "," << state.acc_bias[2] << ","
+                << state.gyro_bias[0] << "," << state.gyro_bias[1] << "," << state.gyro_bias[2] << ","
+                << state.I_p_Gps[0] << "," << state.I_p_Gps[1] << "," << state.I_p_Gps[2] << ","
+                << state.imu_data_ptr->acc[0] << "," << state.imu_data_ptr->acc[1] << "," << state.imu_data_ptr->acc[2] << ","
+                << state.imu_data_ptr->gyro[0] << "," << state.imu_data_ptr->gyro[1] << "," << state.imu_data_ptr->gyro[2] << "\n";
+}
+
+void LocalizationWrapper::LogGps(const ImuGpsLocalization::GpsDataPtr gps_data) {
+    file_gps_ << std::fixed << std::setprecision(15)
+              << gps_data->timestamp << ","
+              << gps_data->lla[0] << "," << gps_data->lla[1] << "," << gps_data->lla[2] << "\n";
+}
+
+void LocalizationWrapper::ConvertStateToRosTopic(const ImuGpsLocalization::State& state) {
+    ros_path_.header.frame_id = "world";
+    ros_path_.header.stamp = ros::Time::now();  
+
+    geometry_msgs::PoseStamped pose;
+    pose.header = ros_path_.header;
+
+    pose.pose.position.x = state.G_p_I[0];
+    pose.pose.position.y = state.G_p_I[1];
+    pose.pose.position.z = state.G_p_I[2];
+
+    const Eigen::Quaterniond G_q_I(state.G_R_I);
+    pose.pose.orientation.x = G_q_I.x();
+    pose.pose.orientation.y = G_q_I.y();
+    pose.pose.orientation.z = G_q_I.z();
+    pose.pose.orientation.w = G_q_I.w();
+
+    ros_path_.poses.push_back(pose);
 }

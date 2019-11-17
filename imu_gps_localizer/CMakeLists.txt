@@ -18,6 +18,7 @@ add_library(imu_gps_localizer_lib
 	src/imu_gps_localizer.cpp
   src/initializer.cpp
   src/imu_processor.cpp
+  src/gps_processor.cpp
 )
 
 target_link_libraries(imu_gps_localizer_lib

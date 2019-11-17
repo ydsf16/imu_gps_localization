@@ -6,6 +6,7 @@ add_compile_options(-std=c++14)
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  nav_msgs
 )
 
 catkin_package()

@@ -20,8 +20,9 @@ public:
     bool ProcessGpsData(const GpsDataPtr gps_data_ptr);
 
 private:
-    std::unique_ptr<Initializer> initializer_;
+    std::unique_ptr<Initializer>  initializer_;
     std::unique_ptr<ImuProcessor> imu_processor_;
+    std::unique_ptr<GpsProcessor> gps_processor_;
 
     bool initialized_;
     Eigen::Vector3d init_lla_; // The initial reference gps point.
