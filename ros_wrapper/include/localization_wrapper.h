@@ -1,7 +1,9 @@
 #pragma once
 
+#include <fstream>
 #include <memory>
 
+#include <nav_msgs/Path.h>
 #include <ros/ros.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <sensor_msgs/Imu.h>
@@ -11,15 +13,25 @@
 class LocalizationWrapper {
 public:
     LocalizationWrapper(ros::NodeHandle& nh);
-    
+    ~LocalizationWrapper();
+
     void ImuCallback(const sensor_msgs::ImuConstPtr& imu_msg_ptr);
 
     void GpsCallBack(const sensor_msgs::NavSatFixConstPtr& gps_msg_ptr);
 
 private:
+    void LogState(const ImuGpsLocalization::State& state);
+    void LogGps(const ImuGpsLocalization::GpsDataPtr gps_data);
+
+    void ConvertStateToRosTopic(const ImuGpsLocalization::State& state);
+    
     ros::Subscriber imu_sub_;
     ros::Subscriber gps_sub_;
     ros::Publisher state_pub_;
+    std::ofstream file_state_;
+    std::ofstream file_gps_;
+
+    nav_msgs::Path ros_path_;
 
     std::unique_ptr<ImuGpsLocalization::ImuGpsLocalizer> imu_gps_localizer_ptr_;
 };

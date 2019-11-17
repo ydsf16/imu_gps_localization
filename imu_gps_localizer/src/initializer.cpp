@@ -60,7 +60,7 @@ bool Initializer::AddGpsData(const GpsDataPtr gps_data_ptr, State* state) {
     // Gyro bias.
     state->cov.block<3, 3>(12, 12) = 0.0004 * Eigen::Matrix3d::Identity();
     // Extrinsic
-    state->cov.block<3, 3>(15, 15) = 0.01 * Eigen::Matrix3d::Identity();
+    state->cov.block<3, 3>(15, 15) = 1e-2 * Eigen::Matrix3d::Identity();
 
     return true;
 }
@@ -99,5 +99,7 @@ bool Initializer::ComputeG_R_IFromImuData(Eigen::Matrix3d* G_R_I) {
 
     return true;
 }
+
+State ConvertENUStateToLLAState(const State& enu_state);
 
 }  // namespace ImuGpsLocalization
