@@ -26,4 +26,13 @@ inline void ConvertENUToLLA(const Eigen::Vector3d& init_lla,
                             point_lla->data()[0], point_lla->data()[1], point_lla->data()[2]);                            
 }
 
+inline Eigen::Matrix3d GetSkewMatrix(const Eigen::Vector3d& v) {
+    Eigen::Matrix3d w;
+    w << 0.,    -v(2), v(1),
+         v(2),  0.,    -v(0),
+         -v(1), v(0),  0.;
+
+    return w;
+}
+
 }  // namespace ImuGpsLocalization

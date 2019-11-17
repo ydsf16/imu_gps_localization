@@ -1,15 +1,30 @@
 #include "localization_wrapper.h"
 
+#include <list>
+#include <vector>
 #include <glog/logging.h>
 
 #include "imu_gps_localizer/base_type.h"
 
 LocalizationWrapper::LocalizationWrapper(ros::NodeHandle& nh) {
-    // Initialization imu gps localizer.
-    const Eigen::Vector3d I_p_Gps = Eigen::Vector3d(0., 0., 0.);
-    const Eigen::Vector4d imu_noise;
+    // Load configs.
+    double acc_noise, gyro_noise, acc_bias_noise, gyro_bias_noise;
+    nh.param("acc_noise",       acc_noise, 1e-2);
+    nh.param("gyro_noise",      gyro_noise, 1e-4);
+    nh.param("acc_bias_noise",  acc_bias_noise, 1e-6);
+    nh.param("gyro_bias_noise", gyro_bias_noise, 1e-8);
 
-    imu_gps_localizer_ptr_ = std::make_unique<ImuGpsLocalization::ImuGpsLocalizer>(imu_noise, I_p_Gps);
+    double x, y, z;
+    nh.param("I_p_Gps_x", x, 0.);
+    nh.param("I_p_Gps_y", y, 0.);
+    nh.param("I_p_Gps_z", z, 0.);
+    const Eigen::Vector3d I_p_Gps(x, y, z);
+
+    // Initialization imu gps localizer.
+    imu_gps_localizer_ptr_ = 
+        std::make_unique<ImuGpsLocalization::ImuGpsLocalizer>(acc_noise, gyro_noise,
+                                                              acc_bias_noise, gyro_bias_noise,
+                                                              I_p_Gps);
 
     // Subscribe topics.
     imu_sub_ = nh.subscribe("/imu/data", 10,  &LocalizationWrapper::ImuCallback, this);
