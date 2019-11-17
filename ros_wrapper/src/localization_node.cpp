@@ -8,10 +8,14 @@
 #include "localization_wrapper.h"
 
 int main (int argc, char** argv) {
-    // Init ros.
+    // Set glog.
+    FLAGS_colorlogtostderr = true;
+
+    // Initialize ros.
     ros::init(argc, argv, "imu_gps_localization");
     ros::NodeHandle nh;
     
+    // Initialize localizer.
     LocalizationWrapper localizer(nh);
 
     ros::spin();
