@@ -1,0 +1,14 @@
+<launch>
+    <param name="acc_noise"       type="double" value="1e-2" />
+    <param name="gyro_noise"      type="double" value="1e-4" />
+    <param name="acc_bias_noise"  type="double" value="1e-6" />
+    <param name="gyro_bias_noise" type="double" value="1e-8" />
+
+    <param name="I_p_Gps_x"       type="double" value="0." />
+    <param name="I_p_Gps_y"       type="double" value="0." />
+    <param name="I_p_Gps_z"       type="double" value="0." />
+
+    <node  name="imu_gps_localization_node" pkg="imu_gps_localization" type="imu_gps_localization_node" output="screen" />
+
+    <!--node pkg="rviz" type="rviz" name="rviz" output="screen" /-->
+</launch>
