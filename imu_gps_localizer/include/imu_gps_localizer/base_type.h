@@ -13,13 +13,21 @@ struct ImuData {
 };
 using ImuDataPtr = std::shared_ptr<ImuData>;
 
-struct GpsData {
+struct GpsPositionData {
     double timestamp;     // In second.
  
     Eigen::Vector3d lla;  // Latitude in degree, longitude in degree, and altitude in meter.
     Eigen::Matrix3d cov;  // Covariance in m^2.
 };
-using GpsDataPtr = std::shared_ptr<GpsData>;
+using GpsPositionDataPtr = std::shared_ptr<GpsPositionData>;
+
+struct GpsVelocityData {
+    double timestamp;
+
+    Eigen::Vector3d vel;
+    Eigen::Matrix3d cov;
+};
+using GpsVelocityDataPtr = std::shared_ptr<GpsVelocityData>;
 
 struct State {
     double timestamp;

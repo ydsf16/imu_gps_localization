@@ -35,7 +35,8 @@ LocalizationWrapper::LocalizationWrapper(ros::NodeHandle& nh) {
 
     // Subscribe topics.
     imu_sub_ = nh.subscribe("/imu/data", 10,  &LocalizationWrapper::ImuCallback, this);
-    gps_sub_ = nh.subscribe("/fix", 10,  &LocalizationWrapper::GpsCallBack, this);
+    gps_position_sub_ = nh.subscribe("/fix", 10,  &LocalizationWrapper::GpsPositionCallback, this);
+    gps_velocity_sub_ = nh.subscribe("/vel", 10,  &LocalizationWrapper::GpsVelocityCallback, this);
 
     state_pub_ = nh.advertise<nav_msgs::Path>("fused_path", 10);
 }
@@ -69,23 +70,35 @@ void LocalizationWrapper::ImuCallback(const sensor_msgs::ImuConstPtr& imu_msg_pt
     LogState(fused_state);
 }
 
-void LocalizationWrapper::GpsCallBack(const sensor_msgs::NavSatFixConstPtr& gps_msg_ptr) {
+void LocalizationWrapper::GpsPositionCallback(const sensor_msgs::NavSatFixConstPtr& gps_msg_ptr) {
     // Check the gps_status.
     if (gps_msg_ptr->status.status != 2) {
         LOG(WARNING) << "[GpsCallBack]: Bad gps message!";
         return;
     }
 
-    ImuGpsLocalization::GpsDataPtr gps_data_ptr = std::make_shared<ImuGpsLocalization::GpsData>();
+    ImuGpsLocalization::GpsPositionDataPtr gps_data_ptr = std::make_shared<ImuGpsLocalization::GpsPositionData>();
     gps_data_ptr->timestamp = gps_msg_ptr->header.stamp.toSec();
     gps_data_ptr->lla << gps_msg_ptr->latitude,
                          gps_msg_ptr->longitude,
                          gps_msg_ptr->altitude;
     gps_data_ptr->cov = Eigen::Map<const Eigen::Matrix3d>(gps_msg_ptr->position_covariance.data());
 
-    imu_gps_localizer_ptr_->ProcessGpsData(gps_data_ptr);
-    
+    imu_gps_localizer_ptr_->ProcessGpsPositionData(gps_data_ptr);
+
     LogGps(gps_data_ptr);
+}
+
+void LocalizationWrapper::GpsVelocityCallback(const geometry_msgs::TwistStampedConstPtr& gps_vel_msg_ptr) {
+    ImuGpsLocalization::GpsVelocityDataPtr gps_data_ptr = std::make_shared<ImuGpsLocalization::GpsVelocityData>();
+    gps_data_ptr->timestamp = gps_vel_msg_ptr->header.stamp.toSec();
+    gps_data_ptr->vel(0) = gps_vel_msg_ptr->twist.linear.x;
+    gps_data_ptr->vel(1) = gps_vel_msg_ptr->twist.linear.y;
+    gps_data_ptr->vel(2) = gps_vel_msg_ptr->twist.linear.z;
+    gps_data_ptr->cov = 2. * 2. * Eigen::Matrix3d::Identity();
+    gps_data_ptr->cov(2, 2) = 1e10;
+
+    imu_gps_localizer_ptr_->ProcessGpsVelocityData(gps_data_ptr);
 }
 
 void LocalizationWrapper::LogState(const ImuGpsLocalization::State& state) {
@@ -103,7 +116,7 @@ void LocalizationWrapper::LogState(const ImuGpsLocalization::State& state) {
                 << state.imu_data_ptr->gyro[0] << "," << state.imu_data_ptr->gyro[1] << "," << state.imu_data_ptr->gyro[2] << "\n";
 }
 
-void LocalizationWrapper::LogGps(const ImuGpsLocalization::GpsDataPtr gps_data) {
+void LocalizationWrapper::LogGps(const ImuGpsLocalization::GpsPositionDataPtr gps_data) {
     file_gps_ << std::fixed << std::setprecision(15)
               << gps_data->timestamp << ","
               << gps_data->lla[0] << "," << gps_data->lla[1] << "," << gps_data->lla[2] << "\n";

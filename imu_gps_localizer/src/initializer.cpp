@@ -8,7 +8,7 @@
 namespace ImuGpsLocalization {
 
 Initializer::Initializer(const Eigen::Vector3d& init_I_p_Gps) 
-    : init_I_p_Gps_(init_I_p_Gps) { }
+    : init_I_p_Gps_(init_I_p_Gps), latest_gps_vel_data_(nullptr) { }
 
 void Initializer::AddImuData(const ImuDataPtr imu_data_ptr) {
     imu_buffer_.push_back(imu_data_ptr);
@@ -18,11 +18,16 @@ void Initializer::AddImuData(const ImuDataPtr imu_data_ptr) {
     }
 }
 
-bool Initializer::AddGpsData(const GpsDataPtr gps_data_ptr, State* state) {
+bool Initializer::AddGpsPositionData(const GpsPositionDataPtr gps_data_ptr, State* state) {
     const ImuDataPtr last_imu_ptr = imu_buffer_.back();
     if (imu_buffer_.size() < kImuDataBufferLength || 
-        std::abs(gps_data_ptr->timestamp - last_imu_ptr->timestamp) > 0.02) {
-        LOG(ERROR) << "[AddGpsData]: Gps and imu timestamps are not synchronized!";
+        std::abs(gps_data_ptr->timestamp - last_imu_ptr->timestamp) > 0.1 ||
+        latest_gps_vel_data_ == nullptr ||
+        std::abs(gps_data_ptr->timestamp - latest_gps_vel_data_->timestamp) > 0.2) {
+
+        LOG(ERROR) << "[AddGpsPositionData]: Gps and imu timestamps are not synchronized!";
+        if (latest_gps_vel_data_ != nullptr)
+            LOG(ERROR) << "Last gps vel time: " << std::abs(gps_data_ptr->timestamp - latest_gps_vel_data_->timestamp);
         return false;
     }
 
@@ -39,9 +44,13 @@ bool Initializer::AddGpsData(const GpsDataPtr gps_data_ptr, State* state) {
     // But, we cannot set the yaw. 
     // So, we set yaw to zero and give it a big covariance.
     if (!ComputeG_R_IFromImuData(&state->G_R_I)) {
-        LOG(WARNING) << "[AddGpsData]: Failed to compute G_R_I!";
+        LOG(WARNING) << "[AddGpsPositionData]: Failed to compute G_R_I!";
         return false;
     }
+
+    const double yaw = std::atan2(latest_gps_vel_data_->vel(1), latest_gps_vel_data_->vel(0));
+    state->G_R_I = Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ()).toRotationMatrix() * state->G_R_I.eval();
+
     // Set bias to zero.
     state->acc_bias.setZero();
     state->gyro_bias.setZero();
@@ -54,7 +63,7 @@ bool Initializer::AddGpsData(const GpsDataPtr gps_data_ptr, State* state) {
     state->cov.block<3, 3>(3, 3) = 100. * Eigen::Matrix3d::Identity(); // velocity std: 10 m/s
     // roll pitch std 10 degree.
     state->cov.block<2, 2>(6, 6) = 10. * kDegreeToRadian * 10. * kDegreeToRadian * Eigen::Matrix2d::Identity();
-    state->cov(8, 8)             = 90. * kDegreeToRadian * 90. * kDegreeToRadian; // yaw std: 90 degree.
+    state->cov(8, 8)             = 100. * kDegreeToRadian * 100. * kDegreeToRadian; // yaw std: 100 degree.
     // Acc bias.
     state->cov.block<3, 3>(9, 9) = 0.0004 * Eigen::Matrix3d::Identity();
     // Gyro bias.
@@ -63,6 +72,10 @@ bool Initializer::AddGpsData(const GpsDataPtr gps_data_ptr, State* state) {
     state->cov.block<3, 3>(15, 15) = 1e-2 * Eigen::Matrix3d::Identity();
 
     return true;
+}
+
+void Initializer::AddGpsVelocityData(const GpsVelocityDataPtr gps_vel_ptr) {
+    latest_gps_vel_data_ = gps_vel_ptr;
 }
 
 bool Initializer::ComputeG_R_IFromImuData(Eigen::Matrix3d* G_R_I) {
@@ -99,7 +112,5 @@ bool Initializer::ComputeG_R_IFromImuData(Eigen::Matrix3d* G_R_I) {
 
     return true;
 }
-
-State ConvertENUStateToLLAState(const State& enu_state);
 
 }  // namespace ImuGpsLocalization

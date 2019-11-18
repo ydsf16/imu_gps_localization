@@ -32,9 +32,9 @@ bool ImuGpsLocalizer::ProcessImuData(const ImuDataPtr imu_data_ptr, State* fused
     return true;
 }
 
-bool ImuGpsLocalizer::ProcessGpsData(const GpsDataPtr gps_data_ptr) {
+bool ImuGpsLocalizer::ProcessGpsPositionData(const GpsPositionDataPtr gps_data_ptr) {
     if (!initialized_) {
-        if (!initializer_->AddGpsData(gps_data_ptr, &state_)) {
+        if (!initializer_->AddGpsPositionData(gps_data_ptr, &state_)) {
             return false;
         }
 
@@ -43,12 +43,29 @@ bool ImuGpsLocalizer::ProcessGpsData(const GpsDataPtr gps_data_ptr) {
         
         initialized_ = true;
 
-        LOG(INFO) << "[ProcessGpsData]: System initialized!";
+        LOG(INFO) << "[ProcessGpsPositionData]: System initialized!";
         return true;
     }
     
     // Update.
-    gps_processor_->UpdateState(init_lla_, gps_data_ptr, &state_);
+    gps_processor_->UpdateStateByGpsPosition(init_lla_, gps_data_ptr, &state_);
+
+    return true;
+}
+
+bool ImuGpsLocalizer::ProcessGpsVelocityData(const GpsVelocityDataPtr gps_vel_data_ptr) {
+    if (gps_vel_data_ptr->vel.norm() < kGpsVelLimit) {
+        return false;
+    }
+
+    if (!initialized_) {
+        initializer_->AddGpsVelocityData(gps_vel_data_ptr);
+        return false;
+    }
+
+    gps_processor_->UpdateStateByGpsVelocity(init_lla_, gps_vel_data_ptr, &state_);
+    
+    LOG(INFO) << "Update by gps velocty";
 
     return true;
 }
