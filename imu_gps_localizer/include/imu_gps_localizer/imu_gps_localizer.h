@@ -1,5 +1,6 @@
 #pragma once
 
+#include <deque>
 #include <Eigen/Core>
 
 #include "imu_gps_localizer/base_type.h"
@@ -10,6 +11,8 @@
 namespace ImuGpsLocalization {
 
 const double kGpsVelLimit = 3.; // m/s
+const int    kStateBufferLength = 200;
+const int    kGpsBufferLength = 100;
 
 class ImuGpsLocalizer {
 public:
@@ -28,7 +31,10 @@ private:
 
     bool initialized_;
     Eigen::Vector3d init_lla_; // The initial reference gps point.
-    State state_;
+    State latest_state_;
+
+    std::deque<State> state_buffer_;
+    std::deque<GpsPositionDataPtr> gps_data_buffer_;
 };
 
 }  // namespace ImuGpsLocalization
