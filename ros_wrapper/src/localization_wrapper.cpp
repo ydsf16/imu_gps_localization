@@ -110,10 +110,7 @@ void LocalizationWrapper::LogState(const ImuGpsLocalization::State& state) {
                 << state.G_v_I[0] << "," << state.G_v_I[1] << "," << state.G_v_I[2] << ","
                 << G_q_I.x() << "," << G_q_I.y() << "," << G_q_I.z() << "," << G_q_I.w() << ","
                 << state.acc_bias[0] << "," << state.acc_bias[1] << "," << state.acc_bias[2] << ","
-                << state.gyro_bias[0] << "," << state.gyro_bias[1] << "," << state.gyro_bias[2] << ","
-                << state.I_p_Gps[0] << "," << state.I_p_Gps[1] << "," << state.I_p_Gps[2] << ","
-                << state.imu_data_ptr->acc[0] << "," << state.imu_data_ptr->acc[1] << "," << state.imu_data_ptr->acc[2] << ","
-                << state.imu_data_ptr->gyro[0] << "," << state.imu_data_ptr->gyro[1] << "," << state.imu_data_ptr->gyro[2] << "\n";
+                << state.gyro_bias[0] << "," << state.gyro_bias[1] << "," << state.gyro_bias[2] << "\n";
 }
 
 void LocalizationWrapper::LogGps(const ImuGpsLocalization::GpsPositionDataPtr gps_data) {
