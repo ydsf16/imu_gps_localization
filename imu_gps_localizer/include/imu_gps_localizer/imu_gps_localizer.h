@@ -21,8 +21,6 @@ public:
 
     bool ProcessGpsPositionData(const GpsPositionDataPtr gps_data_ptr);
 
-    bool ProcessGpsVelocityData(const GpsVelocityDataPtr gps_vel_data_ptr);
-    
 private:
     std::unique_ptr<Initializer>  initializer_;
     std::unique_ptr<ImuProcessor> imu_processor_;

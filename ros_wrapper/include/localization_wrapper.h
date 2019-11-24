@@ -20,8 +20,6 @@ public:
 
     void GpsPositionCallback(const sensor_msgs::NavSatFixConstPtr& gps_msg_ptr);
 
-    void GpsVelocityCallback(const geometry_msgs::TwistStampedConstPtr& gps_vel_msg_ptr);
-
 private:
     void LogState(const ImuGpsLocalization::State& state);
     void LogGps(const ImuGpsLocalization::GpsPositionDataPtr gps_data);
@@ -30,7 +28,6 @@ private:
     
     ros::Subscriber imu_sub_;
     ros::Subscriber gps_position_sub_;
-    ros::Subscriber gps_velocity_sub_;
     ros::Publisher state_pub_;
 
     std::ofstream file_state_;
