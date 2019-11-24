@@ -36,7 +36,6 @@ bool ImuGpsLocalizer::ProcessImuData(const ImuDataPtr imu_data_ptr, State* fused
         state_buffer_.pop_front();
     }
 
-    LOG(WARNING) << "Process IMU.";
     return true;
 }
 
