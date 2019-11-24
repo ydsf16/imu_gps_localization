@@ -54,8 +54,6 @@ bool Initializer::AddGpsPositionData(const GpsPositionDataPtr gps_data_ptr, Stat
     // Set bias to zero.
     state->acc_bias.setZero();
     state->gyro_bias.setZero();
-    // Set initial extrinsic.
-    state->I_p_Gps = init_I_p_Gps_;
 
     // Set covariance.
     state->cov.setZero();
@@ -68,8 +66,6 @@ bool Initializer::AddGpsPositionData(const GpsPositionDataPtr gps_data_ptr, Stat
     state->cov.block<3, 3>(9, 9) = 0.0004 * Eigen::Matrix3d::Identity();
     // Gyro bias.
     state->cov.block<3, 3>(12, 12) = 0.0004 * Eigen::Matrix3d::Identity();
-    // Extrinsic
-    state->cov.block<3, 3>(15, 15) = 1e-2 * Eigen::Matrix3d::Identity();
 
     return true;
 }

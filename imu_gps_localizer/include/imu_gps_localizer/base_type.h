@@ -39,11 +39,8 @@ struct State {
     Eigen::Vector3d acc_bias;  // The bias of the acceleration sensor.
     Eigen::Vector3d gyro_bias; // The bias of the gyroscope sensor.
 
-    // The extrinsic: translation from the GPS frame to the IMU frame.
-    Eigen::Vector3d I_p_Gps;
-
     // Covariance.
-    Eigen::Matrix<double, 18, 18> cov;
+    Eigen::Matrix<double, 15, 15> cov;
 
     // The imu data.
     ImuDataPtr imu_data_ptr; 

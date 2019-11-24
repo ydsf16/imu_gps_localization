@@ -4,9 +4,9 @@
     <param name="acc_bias_noise"  type="double" value="1e-6" />
     <param name="gyro_bias_noise" type="double" value="1e-8" />
 
-    <param name="I_p_Gps_x"       type="double" value="0.1" />
-    <param name="I_p_Gps_y"       type="double" value="0.1" />
-    <param name="I_p_Gps_z"       type="double" value="0.1" />
+    <param name="I_p_Gps_x"       type="double" value="0.0" />
+    <param name="I_p_Gps_y"       type="double" value="0.0" />
+    <param name="I_p_Gps_z"       type="double" value="0.0" />
 
     <param name="log_folder"      type="string" value="$(find imu_gps_localization)" />
 

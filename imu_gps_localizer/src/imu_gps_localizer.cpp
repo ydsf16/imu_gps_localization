@@ -14,7 +14,7 @@ ImuGpsLocalizer::ImuGpsLocalizer(const double acc_noise, const double gyro_noise
     imu_processor_ = std::make_unique<ImuProcessor>(acc_noise, gyro_noise, 
                                                     acc_bias_noise, gyro_bias_noise,
                                                     Eigen::Vector3d(0., 0., -9.81007));
-    gps_processor_ = std::make_unique<GpsProcessor>();
+    gps_processor_ = std::make_unique<GpsProcessor>(I_p_Gps);
 }
 
 bool ImuGpsLocalizer::ProcessImuData(const ImuDataPtr imu_data_ptr, State* fused_state) {
@@ -46,7 +46,7 @@ bool ImuGpsLocalizer::ProcessGpsPositionData(const GpsPositionDataPtr gps_data_p
         LOG(INFO) << "[ProcessGpsPositionData]: System initialized!";
         return true;
     }
-    
+
     // Update.
     gps_processor_->UpdateStateByGpsPosition(init_lla_, gps_data_ptr, &state_);
 
@@ -65,8 +65,6 @@ bool ImuGpsLocalizer::ProcessGpsVelocityData(const GpsVelocityDataPtr gps_vel_da
 
     gps_processor_->UpdateStateByGpsVelocity(init_lla_, gps_vel_data_ptr, &state_);
     
-    LOG(INFO) << "Update by gps velocty";
-
     return true;
 }
 
