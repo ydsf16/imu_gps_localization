@@ -4,6 +4,8 @@
 
 ![image](https://github.com/ydsf16/imu_gps_localization/blob/master/doc/path.png)
 
+## For details, please refer to：https://zhuanlan.zhihu.com/p/94030638
+
 ## Dataset
 https://epan-utbm.github.io/utbm_robocar_dataset/
 
