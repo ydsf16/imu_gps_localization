@@ -19,15 +19,21 @@ void Initializer::AddImuData(const ImuDataPtr imu_data_ptr) {
 }
 
 bool Initializer::AddGpsPositionData(const GpsPositionDataPtr gps_data_ptr, State* state) {
-    const ImuDataPtr last_imu_ptr = imu_buffer_.back();
-    if (imu_buffer_.size() < kImuDataBufferLength || 
-        std::abs(gps_data_ptr->timestamp - last_imu_ptr->timestamp) > 0.1 ||
-        latest_gps_vel_data_ == nullptr ||
-        std::abs(gps_data_ptr->timestamp - latest_gps_vel_data_->timestamp) > 0.2) {
+    if (imu_buffer_.size() < kImuDataBufferLength) {
+        LOG(WARNING) << "[AddGpsPositionData]: No enought imu data!";
+        return false;
+    }
 
+    if (latest_gps_vel_data_ == nullptr) {
+        LOG(WARNING) << "[AddGpsPositionData]: No gps velocity data!";
+        return false;
+    }
+
+    const ImuDataPtr last_imu_ptr = imu_buffer_.back();
+    // TODO: synchronize all sensors.
+    if (std::abs(gps_data_ptr->timestamp - last_imu_ptr->timestamp) > 0.5 ||
+        std::abs(gps_data_ptr->timestamp - latest_gps_vel_data_->timestamp) > 0.5) {
         LOG(ERROR) << "[AddGpsPositionData]: Gps and imu timestamps are not synchronized!";
-        if (latest_gps_vel_data_ != nullptr)
-            LOG(ERROR) << "Last gps vel time: " << std::abs(gps_data_ptr->timestamp - latest_gps_vel_data_->timestamp);
         return false;
     }
 

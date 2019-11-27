@@ -64,7 +64,7 @@ bool ImuGpsLocalizer::ProcessGpsVelocityData(const GpsVelocityDataPtr gps_vel_da
     }
 
     gps_processor_->UpdateStateByGpsVelocity(init_lla_, gps_vel_data_ptr, &state_);
-    
+
     return true;
 }
 
