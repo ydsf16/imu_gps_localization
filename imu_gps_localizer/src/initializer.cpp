@@ -43,9 +43,11 @@ bool Initializer::AddGpsPositionData(const GpsPositionDataPtr gps_data_ptr, Stat
 
     // Set initial mean.
     state->G_p_I.setZero();
+
     // We have no information to set initial velocity. 
     // So, just set it to zero and given big covariance.
     state->G_v_I.setZero();
+
     // We can use the direction of gravity to set roll and pitch. 
     // But, we cannot set the yaw. 
     // So, we set yaw to zero and give it a big covariance.
@@ -53,9 +55,6 @@ bool Initializer::AddGpsPositionData(const GpsPositionDataPtr gps_data_ptr, Stat
         LOG(WARNING) << "[AddGpsPositionData]: Failed to compute G_R_I!";
         return false;
     }
-
-    const double yaw = std::atan2(latest_gps_vel_data_->vel(1), latest_gps_vel_data_->vel(0));
-    state->G_R_I = Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ()).toRotationMatrix() * state->G_R_I.eval();
 
     // Set bias to zero.
     state->acc_bias.setZero();
@@ -100,17 +99,29 @@ bool Initializer::ComputeG_R_IFromImuData(Eigen::Matrix3d* G_R_I) {
     }
 
     // Compute rotation.
+    // Please refer to 
+    // https://github.com/rpng/open_vins/blob/master/ov_core/src/init/InertialInitializer.cpp
     const Eigen::Vector3d acc_norm = mean_acc.normalized();  
-    const double rot_y = std::atan2(acc_norm(0), acc_norm(2));
-    double rot_x = std::atan2(std::abs(acc_norm(1)), std::sqrt(acc_norm(0) * acc_norm(0) + acc_norm(2) * acc_norm(2)));
-    if (-std::sin(rot_x) * acc_norm(1) < 0.) {
-        rot_x = -rot_x;
-    }
 
-    Eigen::AngleAxisd RotX(rot_x, Eigen::Vector3d::UnitX());
-    Eigen::AngleAxisd RotY(rot_y, Eigen::Vector3d::UnitY());
+    // Three axises of the ENU frame in the IMU frame.
+    // z-axis.
+    const Eigen::Vector3d& z_axis = acc_norm;
 
-    *G_R_I = (RotY * RotX).toRotationMatrix().transpose();
+    // x-axis.
+    Eigen::Vector3d x_axis = 
+        Eigen::Vector3d::UnitX() - z_axis * z_axis.transpose() * Eigen::Vector3d::UnitX();
+    x_axis.normalize();
+
+    // y-axis.
+    Eigen::Vector3d y_axis = z_axis.cross(x_axis);
+    y_axis.normalize();
+
+    Eigen::Matrix3d I_R_G;
+    I_R_G.block<3, 1>(0, 0) = x_axis;
+    I_R_G.block<3, 1>(0, 1) = y_axis;
+    I_R_G.block<3, 1>(0, 2) = z_axis;
+
+    *G_R_I = I_R_G.transpose();
 
     return true;
 }
