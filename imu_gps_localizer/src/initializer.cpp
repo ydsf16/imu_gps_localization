@@ -101,11 +101,10 @@ bool Initializer::ComputeG_R_IFromImuData(Eigen::Matrix3d* G_R_I) {
     // Compute rotation.
     // Please refer to 
     // https://github.com/rpng/open_vins/blob/master/ov_core/src/init/InertialInitializer.cpp
-    const Eigen::Vector3d acc_norm = mean_acc.normalized();  
-
+    
     // Three axises of the ENU frame in the IMU frame.
     // z-axis.
-    const Eigen::Vector3d& z_axis = acc_norm;
+    const Eigen::Vector3d& z_axis = mean_acc.normalized(); 
 
     // x-axis.
     Eigen::Vector3d x_axis = 
