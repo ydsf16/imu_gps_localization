@@ -32,8 +32,9 @@ void ImuProcessor::Predict(const ImuDataPtr last_imu, const ImuDataPtr cur_imu, 
                    0.5 * (last_state.G_R_I * acc_unbias + gravity_) * delta_t2;
     state->G_v_I = last_state.G_v_I + (last_state.G_R_I * acc_unbias + gravity_) * delta_t;
     const Eigen::Vector3d delta_angle_axis = gyro_unbias * delta_t;
-    state->G_R_I = last_state.G_R_I * Eigen::AngleAxisd(delta_angle_axis.norm(), delta_angle_axis.normalized()).toRotationMatrix();
-
+    if (delta_angle_axis.norm() > 1e-12) {
+        state->G_R_I = last_state.G_R_I * Eigen::AngleAxisd(delta_angle_axis.norm(), delta_angle_axis.normalized()).toRotationMatrix();
+    }
     // Error-state. Not needed.
 
     // Covariance of the error-state.   
@@ -41,7 +42,11 @@ void ImuProcessor::Predict(const ImuDataPtr last_imu, const ImuDataPtr cur_imu, 
     Fx.block<3, 3>(0, 3)   = Eigen::Matrix3d::Identity() * delta_t;
     Fx.block<3, 3>(3, 6)   = - state->G_R_I * GetSkewMatrix(acc_unbias) * delta_t;
     Fx.block<3, 3>(3, 9)   = - state->G_R_I * delta_t;
-    Fx.block<3, 3>(6, 6)   = Eigen::AngleAxisd(delta_angle_axis.norm(), delta_angle_axis.normalized()).toRotationMatrix().transpose();
+    if (delta_angle_axis.norm() > 1e-12) {
+        Fx.block<3, 3>(6, 6) = Eigen::AngleAxisd(delta_angle_axis.norm(), delta_angle_axis.normalized()).toRotationMatrix().transpose();
+    } else {
+        Fx.block<3, 3>(6, 6).setIdentity();
+    }
     Fx.block<3, 3>(6, 12)  = - Eigen::Matrix3d::Identity() * delta_t;
 
     Eigen::Matrix<double, 15, 12> Fi = Eigen::Matrix<double, 15, 12>::Zero();
