@@ -53,19 +53,4 @@ bool ImuGpsLocalizer::ProcessGpsPositionData(const GpsPositionDataPtr gps_data_p
     return true;
 }
 
-bool ImuGpsLocalizer::ProcessGpsVelocityData(const GpsVelocityDataPtr gps_vel_data_ptr) {
-    if (gps_vel_data_ptr->vel.norm() < kGpsVelLimit) {
-        return false;
-    }
-
-    if (!initialized_) {
-        initializer_->AddGpsVelocityData(gps_vel_data_ptr);
-        return false;
-    }
-
-    gps_processor_->UpdateStateByGpsVelocity(init_lla_, gps_vel_data_ptr, &state_);
-
-    return true;
-}
-
 }  // namespace ImuGpsLocalization

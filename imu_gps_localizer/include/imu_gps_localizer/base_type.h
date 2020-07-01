@@ -21,14 +21,6 @@ struct GpsPositionData {
 };
 using GpsPositionDataPtr = std::shared_ptr<GpsPositionData>;
 
-struct GpsVelocityData {
-    double timestamp;
-
-    Eigen::Vector3d vel;
-    Eigen::Matrix3d cov;
-};
-using GpsVelocityDataPtr = std::shared_ptr<GpsVelocityData>;
-
 struct State {
     double timestamp;
     

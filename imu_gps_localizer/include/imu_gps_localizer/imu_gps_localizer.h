@@ -9,8 +9,6 @@
 
 namespace ImuGpsLocalization {
 
-const double kGpsVelLimit = 3.; // m/s
-
 class ImuGpsLocalizer {
 public:
     ImuGpsLocalizer(const double acc_noise, const double gyro_noise,
@@ -21,8 +19,6 @@ public:
 
     bool ProcessGpsPositionData(const GpsPositionDataPtr gps_data_ptr);
 
-    bool ProcessGpsVelocityData(const GpsVelocityDataPtr gps_vel_data_ptr);
-    
 private:
     std::unique_ptr<Initializer>  initializer_;
     std::unique_ptr<ImuProcessor> imu_processor_;

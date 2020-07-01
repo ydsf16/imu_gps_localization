@@ -8,7 +8,7 @@
 namespace ImuGpsLocalization {
 
 Initializer::Initializer(const Eigen::Vector3d& init_I_p_Gps) 
-    : init_I_p_Gps_(init_I_p_Gps), latest_gps_vel_data_(nullptr) { }
+    : init_I_p_Gps_(init_I_p_Gps) { }
 
 void Initializer::AddImuData(const ImuDataPtr imu_data_ptr) {
     imu_buffer_.push_back(imu_data_ptr);
@@ -24,15 +24,9 @@ bool Initializer::AddGpsPositionData(const GpsPositionDataPtr gps_data_ptr, Stat
         return false;
     }
 
-    if (latest_gps_vel_data_ == nullptr) {
-        LOG(WARNING) << "[AddGpsPositionData]: No gps velocity data!";
-        return false;
-    }
-
     const ImuDataPtr last_imu_ptr = imu_buffer_.back();
     // TODO: synchronize all sensors.
-    if (std::abs(gps_data_ptr->timestamp - last_imu_ptr->timestamp) > 0.5 ||
-        std::abs(gps_data_ptr->timestamp - latest_gps_vel_data_->timestamp) > 0.5) {
+    if (std::abs(gps_data_ptr->timestamp - last_imu_ptr->timestamp) > 0.5) {
         LOG(ERROR) << "[AddGpsPositionData]: Gps and imu timestamps are not synchronized!";
         return false;
     }
@@ -73,10 +67,6 @@ bool Initializer::AddGpsPositionData(const GpsPositionDataPtr gps_data_ptr, Stat
     state->cov.block<3, 3>(12, 12) = 0.0004 * Eigen::Matrix3d::Identity();
 
     return true;
-}
-
-void Initializer::AddGpsVelocityData(const GpsVelocityDataPtr gps_vel_ptr) {
-    latest_gps_vel_data_ = gps_vel_ptr;
 }
 
 bool Initializer::ComputeG_R_IFromImuData(Eigen::Matrix3d* G_R_I) {

@@ -12,20 +12,13 @@ public:
 
     bool UpdateStateByGpsPosition(const Eigen::Vector3d& init_lla, const GpsPositionDataPtr gps_data_ptr, State* state);
 
-    bool UpdateStateByGpsVelocity(const Eigen::Vector3d& init_lla, const GpsVelocityDataPtr gps_data_ptr, State* state);
-    
 private:    
     void ComputeJacobianAndResidual(const Eigen::Vector3d& init_lla,  
                                     const GpsPositionDataPtr gps_data, 
                                     const State& state,
                                     Eigen::Matrix<double, 3, 15>* jacobian,
                                     Eigen::Vector3d* residual);
-    
-    void ComputeJacobianAndResidual(const Eigen::Vector3d& init_lla,  
-                                    const GpsVelocityDataPtr gps_data, 
-                                    const State& state,
-                                    Eigen::Matrix<double, 3, 15>* jacobian,
-                                    Eigen::Vector3d* residual);
+
     const Eigen::Vector3d I_p_Gps_;  
 };
 
