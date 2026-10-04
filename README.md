@@ -9,4 +9,9 @@
 ## Dataset
 https://epan-utbm.github.io/utbm_robocar_dataset/
 
+## License
+The source code is released under GPLv3 license.
+
+For commercial inquiries, please contact wechat: YDSF16 or email: ydsf16@163.com
+
 For any issues, please feel free to contact **[Dongsheng Yang](https://github.com/ydsf16)**: <ydsf16@buaa.edu.cn>
